@@ -23,6 +23,16 @@ function formatPhone(phone) {
   return null;
 }
 
+// Ensure API base URL always ends with a slash
+function getApiBaseUrl() {
+  if (!process.env.API_BASE_URL) {
+    throw new Error('API_BASE_URL is not set in environment variables');
+  }
+  return process.env.API_BASE_URL.endsWith('/')
+    ? process.env.API_BASE_URL
+    : process.env.API_BASE_URL + '/';
+}
+
 // Initiate STK Push
 app.post('/pay', async (req, res) => {
   try {
@@ -35,6 +45,59 @@ app.post('/pay', async (req, res) => {
     if (!amount || amount < 1) {
       return res.status(400).json({ success: false, error: 'Amount must be >= 1' });
     }
+
+    const payload = {
+      amount: Math.round(amount),
+      phone_number: formattedPhone,
+      external_reference: 'ORDER-' + Date.now(),
+      customer_name: 'Customer',
+      callback_url: process.env.CALLBACK_URL
+    };
+
+    if (process.env.CHANNEL_ID) {
+      payload.channel_id = parseInt(process.env.CHANNEL_ID, 10);
+    }
+
+    const resp = await axios.post(
+      getApiBaseUrl() + 'payments.php',
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (resp.data.success) {
+      res.json({ success: true, message: 'STK push sent, check your phone' });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: resp.data.error || 'Failed to initiate payment'
+      });
+    }
+
+  } catch (err) {
+    console.error('Error during /pay request:', {
+      message: err.message,
+      data: err.response?.data,
+      status: err.response?.status
+    });
+    res.status(500).json({
+      success: false,
+      error: err.response?.data?.error || 'Server error'
+    });
+  }
+});
+
+// Callback from SwiftWallet
+app.post('/callback', (req, res) => {
+  console.log('Callback received:', req.body);
+  res.json({ ResultCode: 0, ResultDesc: 'Success' });
+});
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));    }
 
     const payload = {
       amount: Math.round(amount),
