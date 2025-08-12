@@ -8,7 +8,7 @@ const PORT = 3000;
 
 app.use(bodyParser.json());
 app.use(cors({
-  origin: 'https://velvety-duckanoo-dfc067.netlify.app'
+  origin: 'https://incandescent-klepon-4917d0.netlify.app'
 }));
 
 function formatPhone(phone) {
