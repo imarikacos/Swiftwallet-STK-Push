@@ -37,7 +37,7 @@ app.post('/pay', async (req, res) => {
       external_reference: 'ORDER-' + Date.now(),
       customer_name: 'Customer',
       callback_url: "https://swiftwallet-stk-push.onrender.com/callback",
-      channel_id: "#000041"
+      channel_id: "000041"
     };
 
     const url = "https://swiftwallet.co.ke/pay-app-v2/payments.php";
@@ -47,7 +47,8 @@ app.post('/pay', async (req, res) => {
         'Content-Type': 'application/json'
       }
     });
-
+    
+     console.log('SwiftWallet response:', resp.data);
     if (resp.data.success) {
       res.json({ success: true, message: 'STK push sent, check your phone' });
     } else {
