@@ -8,7 +8,7 @@ const PORT = 3000;
 
 app.use(bodyParser.json());
 app.use(cors({
-  origin: 'https://cerulean-frangollo-7b3524.netlify.app'
+  origin: 'https://stk254.netlify.app'
 }));
 
 function formatPhone(phone) {
