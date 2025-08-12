@@ -11,7 +11,7 @@ app.use(bodyParser.json());
 
 // Allow only your specific Netlify site
 app.use(cors({
-  origin: 'https://www.John.netlifly.app'
+  origin: 'https://swiftwallet-stk-push.netlify.app'
 }));
 
 // Format phone to 254XXXXXXXXX
