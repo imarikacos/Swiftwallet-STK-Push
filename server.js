@@ -13,9 +13,8 @@ app.use(bodyParser.json());
 // Allow Netlify + local dev
 app.use(cors({
   origin: [
-    'https://swiftwallet-stk-push.netlify.app',
-    'http://localhost:3000',
-    'http://localhost:5173'
+    'https://elegant-cat-1dae7c.netlify.app',
+    
   ]
 }));
 
