@@ -7,12 +7,27 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// JSON parser
 app.use(bodyParser.json());
 
-// Allow only your specific Netlify site
+// Allow Netlify + local dev
 app.use(cors({
-  origin: 'https://swiftwallet-stk-push.netlify.app'
+  origin: [
+    'https://swiftwallet-stk-push.netlify.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ]
 }));
+
+// Helper: Ensure trailing slash in API base URL
+function getApiBaseUrl() {
+  if (!process.env.API_BASE_URL) {
+    throw new Error('Missing API_BASE_URL in .env');
+  }
+  return process.env.API_BASE_URL.endsWith('/')
+    ? process.env.API_BASE_URL
+    : process.env.API_BASE_URL + '/';
+}
 
 // Format phone to 254XXXXXXXXX
 function formatPhone(phone) {
@@ -23,17 +38,7 @@ function formatPhone(phone) {
   return null;
 }
 
-// Ensure API base URL always ends with a slash
-function getApiBaseUrl() {
-  if (!process.env.API_BASE_URL) {
-    throw new Error('API_BASE_URL is not set in environment variables');
-  }
-  return process.env.API_BASE_URL.endsWith('/')
-    ? process.env.API_BASE_URL
-    : process.env.API_BASE_URL + '/';
-}
-
-// Initiate STK Push
+// Payment endpoint
 app.post('/pay', async (req, res) => {
   try {
     const { phone, amount } = req.body;
@@ -54,20 +59,23 @@ app.post('/pay', async (req, res) => {
       callback_url: process.env.CALLBACK_URL
     };
 
+    // Add channel_id only if provided
     if (process.env.CHANNEL_ID) {
       payload.channel_id = parseInt(process.env.CHANNEL_ID, 10);
+      console.log(`Using channel_id: ${payload.channel_id}`);
+    } else {
+      console.log('No CHANNEL_ID set — using default channel from SwiftWallet dashboard.');
     }
 
-    const resp = await axios.post(
-      getApiBaseUrl() + 'payments.php',
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.API_KEY}`,
-          'Content-Type': 'application/json'
-        }
+    const url = getApiBaseUrl() + 'payments.php';
+    console.log(`Sending payment request to: ${url}`);
+
+    const resp = await axios.post(url, payload, {
+      headers: {
+        Authorization: `Bearer ${process.env.API_KEY}`,
+        'Content-Type': 'application/json'
       }
-    );
+    });
 
     if (resp.data.success) {
       res.json({ success: true, message: 'STK push sent, check your phone' });
@@ -79,10 +87,10 @@ app.post('/pay', async (req, res) => {
     }
 
   } catch (err) {
-    console.error('Error during /pay request:', {
-      message: err.message,
+    console.error('Payment request failed:', {
+      status: err.response?.status,
       data: err.response?.data,
-      status: err.response?.status
+      message: err.message
     });
     res.status(500).json({
       success: false,
@@ -91,53 +99,13 @@ app.post('/pay', async (req, res) => {
   }
 });
 
-// Callback from SwiftWallet
+// SwiftWallet callback
 app.post('/callback', (req, res) => {
   console.log('Callback received:', req.body);
   res.json({ ResultCode: 0, ResultDesc: 'Success' });
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));    }
-
-    const payload = {
-      amount: Math.round(amount),
-      phone_number: formattedPhone,
-      external_reference: 'ORDER-' + Date.now(),
-      customer_name: 'Customer',
-      callback_url: process.env.CALLBACK_URL
-    };
-
-    if (process.env.CHANNEL_ID) {
-      payload.channel_id = parseInt(process.env.CHANNEL_ID, 10);
-    }
-
-    const resp = await axios.post(
-      process.env.API_BASE_URL + 'payments.php',
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    if (resp.data.success) {
-      res.json({ success: true, message: 'STK push sent, check your phone' });
-    } else {
-      res.status(400).json({ success: false, error: resp.data.error || 'Failed to initiate payment' });
-    }
-
-  } catch (err) {
-    console.error(err.response ? err.response.data : err.message);
-    res.status(500).json({ success: false, error: 'Server error' });
-  }
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
-
-// Callback from SwiftWallet
-app.post('/callback', (req, res) => {
-  console.log('Callback received:', req.body);
-  res.json({ ResultCode: 0, ResultDesc: 'Success' });
-});
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
