@@ -8,7 +8,7 @@ const PORT = 3000;
 
 app.use(bodyParser.json());
 app.use(cors({
-  origin: 'https://preeminent-pothos-6c1122.netlify.app'
+  origin: 'https://coruscating-kashata-254e7e.netlify.app'
 }));
 
 function formatPhone(phone) {
