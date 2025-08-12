@@ -13,8 +13,9 @@ app.use(bodyParser.json());
 // Allow Netlify + local dev
 app.use(cors({
   origin: [
-    'https://elegant-cat-1dae7c.netlify.app',
-    
+    'https://cerulean-frangollo-7b3524.netlify.app',
+    'http://localhost:3000',
+    'http://localhost:5173'
   ]
 }));
 
