@@ -1,35 +1,16 @@
-require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
-// JSON parser
 app.use(bodyParser.json());
-
-// Allow Netlify + local dev
 app.use(cors({
-  origin: [
-    'https://cerulean-frangollo-7b3524.netlify.app',
-    'http://localhost:3000',
-    'http://localhost:5173'
-  ]
+  origin: 'https://cerulean-frangollo-7b3524.netlify.app'
 }));
 
-// Helper: Ensure trailing slash in API base URL
-function getApiBaseUrl() {
-  if (!process.env.API_BASE_URL) {
-    throw new Error('Missing API_BASE_URL in .env');
-  }
-  return process.env.API_BASE_URL.endsWith('/')
-    ? process.env.API_BASE_URL
-    : process.env.API_BASE_URL + '/';
-}
-
-// Format phone to 254XXXXXXXXX
 function formatPhone(phone) {
   const digits = phone.replace(/\D/g, '');
   if (digits.length === 9 && digits.startsWith('7')) return '254' + digits;
@@ -38,7 +19,6 @@ function formatPhone(phone) {
   return null;
 }
 
-// Payment endpoint
 app.post('/pay', async (req, res) => {
   try {
     const { phone, amount } = req.body;
@@ -56,23 +36,14 @@ app.post('/pay', async (req, res) => {
       phone_number: formattedPhone,
       external_reference: 'ORDER-' + Date.now(),
       customer_name: 'Customer',
-      callback_url: process.env.CALLBACK_URL
+      callback_url: "https://swiftwallet-stk-push.onrender.com/callback",
+      channel_id: "#000041"
     };
 
-    // Add channel_id only if provided
-    if (process.env.CHANNEL_ID) {
-      payload.channel_id = parseInt(process.env.CHANNEL_ID, 10);
-      console.log(`Using channel_id: ${payload.channel_id}`);
-    } else {
-      console.log('No CHANNEL_ID set — using default channel from SwiftWallet dashboard.');
-    }
-
-    const url = getApiBaseUrl() + 'payments.php';
-    console.log(`Sending payment request to: ${url}`);
-
+    const url = "https://swiftwallet.co.ke/pay-app-v2/payments.php";
     const resp = await axios.post(url, payload, {
       headers: {
-        Authorization: `Bearer ${process.env.API_KEY}`,
+        Authorization: `Bearer fb53284f56ed14a6ea3ca908c70763b5d00d03e769576611e5f337709d4c7f5a`,
         'Content-Type': 'application/json'
       }
     });
@@ -87,11 +58,6 @@ app.post('/pay', async (req, res) => {
     }
 
   } catch (err) {
-    console.error('Payment request failed:', {
-      status: err.response?.status,
-      data: err.response?.data,
-      message: err.message
-    });
     res.status(500).json({
       success: false,
       error: err.response?.data?.error || 'Server error'
@@ -99,13 +65,11 @@ app.post('/pay', async (req, res) => {
   }
 });
 
-// SwiftWallet callback
 app.post('/callback', (req, res) => {
   console.log('Callback received:', req.body);
   res.json({ ResultCode: 0, ResultDesc: 'Success' });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
