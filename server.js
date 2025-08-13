@@ -8,7 +8,7 @@ const PORT = 3000;
 
 app.use(bodyParser.json());
 app.use(cors({
-  origin: 'https://marvelous-mochi-4f34a9.netlify.app'
+  origin: 'https://dynamic-brioche-bc28d0.netlify.app'
 }));
 
 function formatPhone(phone) {
