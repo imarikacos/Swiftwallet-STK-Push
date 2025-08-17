@@ -8,7 +8,7 @@ const PORT = 3000;
 
 app.use(bodyParser.json());
 app.use(cors({
-  origin: 'https://loanswiftke.netlify.app'
+  origin: 'https://swiftloanke-com.onrender.com'
 }));
 
 function formatPhone(phone) {
