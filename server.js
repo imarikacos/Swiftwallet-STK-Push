@@ -37,7 +37,7 @@ app.post('/pay', async (req, res) => {
       external_reference: 'ORDER-' + Date.now(),
       customer_name: 'Customer',
       callback_url: "https://swiftwallet-stk-push.onrender.com/callback",
-      channel_id: "000094"
+      channel_id: "000101"
     };
 
     const url = "https://swiftwallet.co.ke/pay-app-v2/payments.php";
